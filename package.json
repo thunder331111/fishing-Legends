@@ -1,10 +1,7 @@
 {
-  "name": "fishing-legends",
+  "name": "fishing-legends-complete",
   "version": "1.0.0",
-  "description": "3D Multiplayer Fishing Game",
-  "scripts": {
-    "dev": "serve .",
-    "build": "echo 'Ready!'"
-  },
-  "dependencies": {}
+  "dependencies": {
+    "socket.io": "^4.7.2"
+  }
 }
