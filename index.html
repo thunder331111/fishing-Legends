@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fishing Legends - Game Mancing 3D Multiplayer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0c0c2e 0%, #1a1a3e 50%, #2d2d5a 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Loading Screen */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            width: 80px;
+            height: 80px;
+            border: 5px solid rgba(255,255,255,0.1);
+            border-top: 5px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Main Container */
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+        }
+
+        /* UI Panels */
+        .panel {
+            position: absolute;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        /* Login Panel */
+        #loginPanel {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4ade80;
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4ade80, #22c55e);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(74, 222, 128, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        /* HUD */
+        #hud {
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-item {
+            background: rgba(0,0,0,0.7);
+            padding: 12px 20px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .player-list {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            width: 250px;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            margin-bottom: 8px;
+            border-radius: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Inventory & Shop */
+        #inventory {
+            bottom: 20px;
+            left: 20px;
+            width: 350px;
+            max-height: 200px;
+        }
+
+        #shop {
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 200px;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .item {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .item:hover {
+            transform: scale(1.1);
+            background: rgba(74, 222, 128, 0.3);
+        }
+
+        .tier-common { border: 2px solid #9ca3af; }
+        .tier-rare { border: 2px solid #3b82f6; }
+        .tier-epic { border: 2px solid #8b5cf6; }
+        .tier-legendary { border: 2px solid #f59e0b; animation: glow 2s infinite; }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 10px #f59e0b; }
+            50% { box-shadow: 0 0 20px #f59e0b, 0 0 30px #f59e0b; }
+        }
+
+        /* Minimap */
+        #minimap {
+            top: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Chat */
+        #chat {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            max-height: 200px;
+        }
+
+        #chatMessages {
+            height: 140px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.8);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        #chatInput {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+        }
+
+        /* Three.js Canvas */
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .panel { width: 90vw; padding: 15px; }
+            #hud { flex-direction: column; gap: 10px; }
+            .player-list, #inventory, #shop { position: fixed; width: 90vw; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading">
+        <div class="loader"></div>
+        <h2 style="margin-top: 20px; font-family: 'Orbitron', monospace;">Fishing Legends</h2>
+        <p style="opacity: 0.8;">Loading 3D World...</p>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameContainer">
+        <!-- Login Panel -->
+        <div id="loginPanel" class="panel">
+            <h2 style="font-family: 'Orbitron', monospace; text-align: center;">🎣 Fishing Legends</h2>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Username" maxlength="15">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Password">
+            </div>
+            <button class="btn btn-primary" onclick="login()">Login</button>
+            <button class="btn btn-secondary" onclick="toggleRegister()">Register</button>
+            <div id="registerSection" style="display: none;">
+                <button class="btn btn-primary" onclick="register()">Create Account</button>
+            </div>
+        </div>
+
+        <!-- HUD -->
+        <div id="hud" style="display: none;">
+            <div class="stats">
+                <div class="stat-item">
+                    <span style="font-size: 24px;">💎</span>
+                    <span id="diamonds">0</span>
+                </div>
+                <div class="stat-item">
+                    <span style="font-size: 24px;">🪙</span>
+                    <span id="coins">0</span>
+                </div>
+                <div class="stat-item">
+                    <span style="font-size: 24px;">🎟️</span>
+                    <span id="tickets">0</span>
+                </div>
+                <div class="stat-item">
+                    <span style="font-size: 20px;">👥</span>
+                    <span id="serverPlayers">1/30</span>
+                </div>
+            </div>
+            
+            <div style="font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 700;">
+                Level <span id="level">1</span>
+            </div>
+        </div>
+
+        <!-- Player List -->
+        <div id="playerList" class="player-list panel" style="display: none;">
+            <h3>Online Players</h3>
+            <div id="playersContainer"></div>
+        </div>
+
+        <!-- Minimap -->
+        <div id="minimap" style="display: none;"></div>
+
+        <!-- Inventory -->
+        <div id="inventory" class="panel" style="display: none;">
+            <h3>🎣 Rods & Fish</h3>
+            <div class="inventory-grid" id="inventoryGrid"></div>
+        </div>
+
+        <!-- Shop -->
+        <div id="shop" class="panel" style="display: none;">
+            <h3>🛒 Shop</h3>
+            <div class="inventory-grid" id="shopGrid"></div>
+        </div>
+
+        <!-- Chat -->
+        <div id="chat" class="panel" style="display: none;">
+            <div id="chatMessages"></div>
+            <input type="text" id="chatInput" placeholder="Chat with friends..." onkeypress="handleChat(event)">
+        </div>
+
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- Three.js & Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <script>
+        // Game State
+        let gameState = {
+            scene: null,
+            camera: null,
+            renderer: null,
+            player: null,
+            players: {},
+            fish: [],
+            rods: ['🎣', '🪝', '🎵', '⚡', '⭐'],
+            currentRod: 0,
+            isFishing: false,
+            account: null,
+            serverId: null
+        };
+
+        let socket = null;
+        let fishData = [];
+        let skins = {
+            male: Array(67).fill().map((_, i) => `👕${i+1}`),
+            female: Array(88).fill().map((_, i) => `👗${i+1}`),
+            pants: Array(128).fill().map((_, i) => `👖${i+1}`)
+        };
+
+        // Initialize 150+ Fish with Tiers
+        function initFishData() {
+            const tiers = [
+                { name: 'Common', emoji: '🐟', rarity: 0.6, color: '#9ca3af' },
+                { name: 'Uncommon', emoji: '🐠', rarity: 0.25, color: '#10b981' },
+                { name: 'Rare', emoji: '🐡', rarity: 0.1, color: '#3b82f6' },
+                { name: 'Epic', emoji: '🦈', rarity: 0.04, color: '#8b5cf6' },
+                { name: 'Legendary', emoji: '🐙', rarity: 0.008, color: '#f59e0b' },
+                { name: 'Mythic', emoji: '🐳', rarity: 0.002, color: '#ef4444' }
+            ];
+
+            fishData = [];
+            let id = 1;
+            tiers.forEach(tier => {
+                for(let i = 0; i < 25; i++) {
+                    fishData.push({
+                        id: id++,
+                        name: `${tier.name} Fish ${id}`,
+                        emoji: tier.emoji,
+                        tier: tier.name,
+                        rarity: tier.rarity,
+                        value: Math.floor(Math.random() * 1000) + 100,
+                        color: tier.color,
+                        caught: false
+                    });
+                }
+            });
+        }
+
+        // Account System
+        const accounts = JSON.parse(localStorage.getItem('fishingAccounts') || '{}');
+
+        function toggleRegister() {
+            const section = document.getElementById('registerSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if(!username || !password) {
+                alert('Please fill all fields!');
+                return;
+            }
+
+            if(accounts[username]) {
+                alert('Username already exists!');
+                return;
+            }
+
+            accounts[username] = {
+                password,
+                level: 1,
+                coins: 1000,
+                diamonds: 50,
+                tickets: 5,
+                inventory: [],
+                rod: 0,
+                skin: { type: 'male', id: 0 },
+                fishCaught: {},
+                totalFish: 0,
+                serverHistory: []
+            };
+
+            localStorage.setItem('fishingAccounts', JSON.stringify(accounts));
+            alert('Account created successfully!');
+            login();
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if(!accounts[username] || accounts[username].password !== password) {
+                alert('Invalid credentials!');
+                return;
+            }
+
+            gameState.account = accounts[username];
+            document.getElementById('loginPanel').style.display = 'none';
+            initGame();
+            connectToServer();
+        }
+
+        // Server Connection (Socket.IO Simulation)
+        function connectToServer() {
+            // Simulate server connection
+            socket = io('http://localhost:3000'); // Ganti dengan server nyata
+            
+            socket.on('connect', () => {
+                console.log('Connected to server');
+                socket.emit('joinServer', gameState.account.username);
+            });
+
+            socket.on('serverFull', () => {
+                alert('Server full! Creating new server...');
+                gameState.serverId = 'server_' + Date.now();
+            });
+
+            socket.on('playerList', (players) => {
+                updatePlayerList(players);
+            });
+
+            socket.on('playerMoved', (data) => {
+                if(gameState.players[data.id]) {
+                    gameState.players[data.id].position.set(data.x, data.y, data.z);
+                }
+            });
+        }
+
+        function updatePlayerList(players) {
+            const container = document.getElementById('playersContainer');
+            container.innerHTML = '';
+            
+            Object.values(players).forEach(player => {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.innerHTML = `
+                    <span style="font-size: 20px;">${player.skin || '👤'}</span>
+                    <span>${player.username} (Lv.${player.level})</span>
+                `;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('serverPlayers').textContent = `${Object.keys(players).length}/30`;
+        }
+
+        // Three.js Game Engine
+        function initGame() {
+            initFishData();
+            setupThreeJS();
+            setupUI();
+            loadAccountData();
+            animate();
+        }
+
+        function setupThreeJS() {
+            const canvas = document.getElementById('gameCanvas');
+            
+            // Scene
+            gameState.scene = new THREE.Scene();
+            gameState.scene.fog = new THREE.Fog(0x0c0c2e, 10, 100);
+
+            // Camera
+            gameState.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            gameState.camera.position.set(0, 15, 20);
+
+            // Renderer
+            gameState.renderer = new THREE.WebGLRenderer({ 
+                canvas,
+                antialias: true,
+                alpha: true 
+            });
+            gameState.renderer.setSize(window.innerWidth, window.innerHeight);
+            gameState.renderer.setClearColor(0x0c0c2e, 1);
+            gameState.renderer.shadowMap.enabled = true;
+            gameState.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            gameState.scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(50, 50, 50);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            gameState.scene.add(directionalLight);
+
+            // Water (Ocean)
+            const waterGeometry = new THREE.PlaneGeometry(200, 200);
+            const waterMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x1e40af,
+                transparent: true,
+                opacity: 0.8
+            });
+            const water = new THREE.Mesh(waterGeometry, waterMaterial);
+            water.rotation.x = -Math.PI / 2;
+            water.receiveShadow = true;
+            gameState.scene.add(water);
+
+            // Islands
+            for(let i = 0; i < 5; i++) {
+                const islandGeometry = new THREE.SphereGeometry(3 + Math.random() * 2, 32, 32);
+                const islandMaterial = new THREE.MeshLambertMaterial({ 
+                    color: new THREE.Color().setHSL(0.15, 0.4, 0.3 + Math.random() * 0.2)
+                });
+                const island = new THREE.Mesh(islandGeometry, islandMaterial);
+                island.position.set(
+                    (Math.random() - 0.5) * 80,
+                    -3 + Math.random() * 2,
+                    (Math.random() - 0.5) * 80
+                );
+                island.castShadow = true;
+                island.receiveShadow = true;
+                gameState.scene.add(island);
+            }
+
+            // Player Model
+            createPlayerModel();
+
+            // Spawn Fish
+            spawnFish();
+
+            document.getElementById('gameContainer').style.display = 'block';
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('playerList').style.display = 'block';
+            document.getElementById('minimap').style.display = 'block';
+            document.getElementById('inventory').style.display = 'block';
+            document.getElementById('shop').style.display = 'block';
+            document.getElementById('chat').style.display = 'block';
+        }
+
+        function createPlayerModel() {
+            const geometry = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8);
